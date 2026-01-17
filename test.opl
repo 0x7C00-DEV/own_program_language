@@ -1,0 +1,20 @@
+class TEST {
+    a: int,
+    b: string,
+    c: char,
+    d: int,
+    t: TEST,
+}
+
+let x = new TEST {
+    a: 23,
+    b: "hello, world",
+    c: "a",
+    d: new TEST {
+        a: 44,
+        b: "sdddd"
+    }
+};
+
+let g = x.d.a;
+print(g);
