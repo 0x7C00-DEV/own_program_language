@@ -18,3 +18,6 @@ let x = new TEST {
 
 let g = x.d.a;
 print(g);
+x.d.a = 12;
+print(g);
+print(x.d.a);

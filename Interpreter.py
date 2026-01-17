@@ -81,6 +81,9 @@ class Number(Value):
             else:
                 self.number = float(self.number)
 
+    def copy(self):
+        return Number(self.number)
+
     def __iset__(self, other):
         self.number = other.number
 
@@ -130,8 +133,14 @@ class String(Value):
     def __init__(self, string):
         self.string = string
 
+    def copy(self):
+        return String(self.string)
+
     def __repr__(self):
         return f'String("{self.string}")'
+
+    def __istr__(self, value):
+        self.string = value.string
     
     def __length__(self):
         return Number(len(self.string))
@@ -148,6 +157,12 @@ class String(Value):
 class Bool(Value):
     def __init__(self, bol):
         self.bol = bol
+
+    def copy(self):
+        return Bool(self.bol)
+
+    def __iset__(self, value):
+        self.bol = value.bol
 
     def __repr__(self):
         return f'<{self.bol}>'
@@ -171,6 +186,12 @@ class Array(Value):
     def __init__(self, elements):
         self.elements = elements
 
+    def __iset__(self, value):
+        self.elements = value
+
+    def copy(self):
+        return Array(self.elements)
+
     def __length__(self):
         return Number(len(self.elements))
 
@@ -191,6 +212,9 @@ class Struct(Value):
     def __init__(self, name, fields):
         self.name = name
         self.fields = fields
+
+    def __iset__(self, name, value):
+        self.fields[name].__iset__(value)
 
     def __field_get__(self, name):
         return self.fields.get(name, NameNotFound())
@@ -267,7 +291,7 @@ class Interpreter:
         if kind == 'NumberNode':
             return Number(node.num)
         if kind == 'MemberAccessNode' or kind == "str":
-            return self.visit_member_access(node)
+            return self.visit_member_access(node).copy()
         if kind == 'BoolNode':
             if node.bol == 'false':
                 return Bool(False)
@@ -431,19 +455,21 @@ class Interpreter:
             self.context.set(node.id, self.visit(node.id).added_by(Number(1.0)))
 
     def visit_assign_node(self, node: AssignNode):
-        if type(node.id).__name__ == 'ElementGetNode':
-            self.visit_member_access(node.id.name).__set_elemeny__(self.visit(node.id.pos), self.visit(node.value))
+        if type(node.id).__name__ == 'MemberAccessNode':
+            self.visit_member_access(node.id).__iset__(self.visit(node.value).copy())
+        elif type(node.id).__name__ == 'ElementGetNode':
+            self.visit_member_access(node.id.name).__set_elemeny__(self.visit(node.id.pos), self.visit(node.value).copy())
         else:
-            self.context.set(node.id, self.visit(node.value))
+            self.context.set(node.id, self.visit(node.value).copy())
 
     def visit_dec_node(self, node: DecNode):
         if type(node.id).__name__ == 'ElementGetNode':
             self.visit_member_access(node.id.name).__set_elemeny__(
                     self.visit(node.id.pos), 
-                    self.visit_member_access(node.id.name).__get_element__(self.visit(node.id.pos)).subbed_by(Number(1.0))
+                    self.visit_member_access(node.id.name).__get_element__(self.visit(node.id.pos)).subbed_by(Number(1.0).copy())
                 )
         else:
-            self.context.set(node.id, self.visit(node.id).subbed_by(Number(1.0)))
+            self.context.set(node.id, self.visit(node.id).subbed_by(Number(1.0)).copy())
 
     def visit_while_node(self, node: WhileNode):
         self.create_new_context('<WhileLoop>')
