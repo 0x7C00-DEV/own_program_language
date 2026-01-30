@@ -158,6 +158,13 @@ class ContinueNode:
     def __repr__(self):
         return f'Continue'
     
+class NoneNode:
+    def __init__(self):
+        pass
+    
+    def __repr__(self):
+        return 'null'
+
 class BreakNode:
     def __init__(self): pass
 
@@ -224,6 +231,10 @@ class Parser:
                     tmp = self._make_assign_node(tmp)
                 self.asts.append(tmp)
                 self.expect_value(';')
+
+    def make_null_node(self):
+        self.advance()
+        return NoneNode()
 
     def make_new_node(self):
         self.expect_value('new')
@@ -472,6 +483,8 @@ class Parser:
     def make_value(self):
         if self.match_value('new'):
             return self.make_new_node()
+        if self.match_value('null'):
+            return self.make_null_node()
         if self.match_value('++'):
             self.advance()
             return IncNode(self.make_expression())

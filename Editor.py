@@ -1,16 +1,36 @@
 from tkinter import *
 import tkinter.ttk as tk
 import tkinter.font as tf
+from tkinter import filedialog
+import Parser
+import Lexer
 import os
 
-class TerminalWidget(Text):
-    def __init__(self, master, *a, **b):
-        super().__init__(master, *a, **b)
-        self.buffer = ''
+
+class Editor(Frame):
+    def __init__(self, master, file_name, *a, **b):
+        super().__init__(master)
+        self.file_name = file_name
+        self.text = Text(self, tabs=28,  *a, **b)
+        self.scrollbar = Scrollbar(self, command=self.text.yview)
+        self.text.config(yscrollcommand=self.scrollbar.set)
+        self.scrollbar.pack(side=RIGHT, fill=Y)
+        self.text.pack(side=LEFT, fill=BOTH, expand=True)
+        self.text.bind('<Key>', self.on_key_event)
+
+    def update_file(self):
+        f = open(self.file_name, 'r', encoding='UTF-8')
+        self.text.delete(1.0, END)
+        self.text.insert('1.0', f.read())
+        f.close()
+
+    def on_key_event(self, e):
+        print(e.char)
 
 class MainWindow(Tk):
     def __init__(self):
         super().__init__()
+        self.files = []
         self.title(f'{os.getcwd()}')
         self.geometry('1000x600')
         self.main_pw = tk.PanedWindow(self, orient='horizontal')
@@ -59,7 +79,16 @@ class MainWindow(Tk):
         self.terminal_s.add(tk.Frame(self.terminal_s), text='输出')
 
     def open_file(self):
-        pass
+        file_path = filedialog.askopenfilename(
+            title="选择文件",
+            filetypes=[("所有文件", "*.*"),
+                       ("文本文件", "*.txt"),
+                       ("Python文件", "*.py"),
+                       ("图片文件", "*.png *.jpg *.jpeg *.gif")]
+        )
+        nf = Editor(self.file_text, file_path, font="consolas 10")
+        nf.update_file()
+        self.file_text.add(nf, text=file_path.split('/')[-1])
 
     def save_current_file(self):
         pass

@@ -139,7 +139,7 @@ class String(Value):
     def __repr__(self):
         return f'String("{self.string}")'
 
-    def __istr__(self, value):
+    def __iset__(self, value):
         self.string = value.string
     
     def __length__(self):
@@ -207,6 +207,21 @@ class Array(Value):
 
     def __get_element__(self, pos):
         return self.elements[int(pos.number)]
+    
+class StructTemplate(Value):
+    def __init__(self, name, fields):
+        self.fields = fields
+        self.name   = name 
+
+    def __repr__(self):
+        return f'TMP[{self.fields}]'
+    
+class Null(Value):
+    def __init__(self):
+        pass 
+
+    def __repr__(self):
+        return f'null'
 
 class Struct(Value):
     def __init__(self, name, fields):
@@ -288,6 +303,8 @@ class Interpreter:
             return self.visit_break_node()
         if kind == 'ContinueNode':
             return self.visit_continue_node()
+        if kind == 'NoneNode':
+            return self.visit_null_node()
         if kind == 'NumberNode':
             return Number(node.num)
         if kind == 'MemberAccessNode' or kind == "str":
@@ -332,14 +349,27 @@ class Interpreter:
         if kind == 'AssignNode':
             return self.visit_assign_node(node)
         if kind == 'ClassNode':
+            cn = self.visit_class_node(node)
+            self.context.add(cn.name, cn)
             return
         raise SystemError(f'Operator not supposed "{kind}"')
+    
+    def visit_null_node(self):
+        return Null()
+    
+    def visit_class_node(self, node: ClassNode):
+        name = node.name 
+        fie  = node.fields
+        return StructTemplate(name, fie)
 
     def visit_new_node(self, node: NewNode):
         name = node.name
         args = node.args
+        t: StructTemplate = self.context.get(name)
         tmp = {}
         for i in args:
+            if type(t.fields.get(i, NameNotFound())).__name__ == 'NameNotFound':
+                raise NameError(f'Name "{i}" not found in class "{name}"') 
             tmp[i] = self.visit(args[i])
         return Struct(name, tmp)
 
@@ -349,6 +379,18 @@ class Interpreter:
         return self.visit(id).__get_element__(pos)
 
     def visit_call_node(self, node: CallNode):
+        if type(node.name).__name__ == 'MemberAccessNode':
+            name = node.name.fiele
+            parent = node.name.parent
+            id = self.visit_member_access(name)
+            this = self.visit_member_access(parent)
+            param: list[VarDefineNode] = id.param
+            body: BlockNode  = id.body
+            context_ = {}
+            context_['this'] = this 
+            for i in range(len(node.param)):
+                context_[param[i].name] = self.visit(node.param[i])
+            return Interpreter(body.codes, Context(context_, self.context, id.name)).res  
         id: Function = self.visit_member_access(node.name)
         if type(id).__name__ == 'function' or type(id).__name__ == 'method':
             vals = []

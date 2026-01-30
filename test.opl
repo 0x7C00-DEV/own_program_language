@@ -1,23 +1,17 @@
-class TEST {
-    a: int,
-    b: string,
-    c: char,
-    d: int,
-    t: TEST,
+class X {
+    a: string ,
+    b: int,
 }
 
-let x = new TEST {
-    a: 23,
-    b: "hello, world",
-    c: "a",
-    d: new TEST {
-        a: 44,
-        b: "sdddd"
-    }
+let u = new X {
+    a: "hello",
+    b: 12
 };
 
-let g = x.d.a;
-print(g);
-x.d.a = 12;
-print(g);
-print(x.d.a);
+func test() {
+    this.a = "a";
+    this.b = 1;
+}
+
+u.test();
+print(u.a);
