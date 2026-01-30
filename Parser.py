@@ -143,10 +143,15 @@ class FunctionDefineNode:
 
     def __repr__(self):
         return f'Function[{self.name}, {self.params}, {self.body}]'
+
+
+SEL_PRE = 'PRE' # 前缀
+SEL_SUF = 'SUF' # 后缀
     
 class IncNode:
-    def __init__(self, id):
-        self.id = id 
+    def __init__(self, id, kind = SEL_PRE):
+        self.id = id
+        self.kind = kind
 
     def __repr__(self):
         return f'Inc({self.id})'
@@ -170,6 +175,7 @@ class BreakNode:
 
     def __repr__(self): return 'Break'
 
+
 class NewNode:
     def __init__(self, name, args):
         self.name = name
@@ -179,8 +185,9 @@ class NewNode:
         return f'New[{self.name}, {self.args}]'
 
 class DecNode:
-    def __init__(self, id):
-        self.id = id 
+    def __init__(self, id, kind = SEL_PRE):
+        self.id = id
+        self.kind = kind
 
     def __repr__(self):
         return f'Dec({self.id})'
@@ -229,6 +236,12 @@ class Parser:
                 tmp = self.make_expression()
                 if self.match_value('='):
                     tmp = self._make_assign_node(tmp)
+                if self.match_value('++'):
+                    self.advance()
+                    tmp = IncNode(tmp, SEL_SUF)
+                if self.match_value('--'):
+                    self.advance()
+                    tmp = DecNode(tmp, SEL_SUF)
                 self.asts.append(tmp)
                 self.expect_value(';')
 
@@ -261,15 +274,17 @@ class Parser:
     def make_assign_node(self):
         if self.match_value('++'):
             self.advance()
-            return IncNode(self.make_member_access())
+            return IncNode(self.make_member_access(), SEL_PRE)
         if self.match_value('--'):
             self.advance()
-            return DecNode(self.make_member_access())
+            return DecNode(self.make_member_access(), SEL_PRE)
         tmp = self.make_member_access()
         op  = self.current.data
         self.advance()
-        if op == '++': return IncNode(tmp)
-        if op == '--': return DecNode(tmp)
+        if op == '++':
+            return IncNode(tmp, SEL_SUF)
+        if op == '--':
+            return DecNode(tmp, SEL_SUF)
         if op == '=':
             val = self.make_expression()
             return AssignNode(tmp, val)
@@ -374,6 +389,12 @@ class Parser:
                 tmp = self.make_expression()
                 if self.match_value('='):
                     tmp = self._make_assign_node(tmp)
+                if self.match_value('++'):
+                    self.advance()
+                    tmp = IncNode(tmp, SEL_SUF)
+                if self.match_value('--'):
+                    self.advance()
+                    tmp = DecNode(tmp, SEL_SUF)
                 b.append(tmp)
                 self.expect_value(';')
 
@@ -487,10 +508,10 @@ class Parser:
             return self.make_null_node()
         if self.match_value('++'):
             self.advance()
-            return IncNode(self.make_expression())
+            return IncNode(self.make_expression(), SEL_PRE)
         if self.match_value('--'):
             self.advance()
-            return DecNode(self.make_expression())
+            return DecNode(self.make_expression(), SEL_PRE)
         if self.match_type(TT_NUM):
             tmp = NumberNode(self.current.data)
             self.advance()
@@ -500,7 +521,14 @@ class Parser:
             self.advance()
             return tmp
         if self.match_type(TT_ID):
-            return self.make_call(self.make_member_access())
+            tmp = self.make_call(self.make_member_access())
+            if self.match_value('++'):
+                self.advance()
+                tmp = IncNode(tmp, SEL_SUF)
+            if self.match_value('--'):
+                self.advance()
+                tmp = DecNode(tmp, SEL_SUF)
+            return tmp
         if self.match_value('['):
             self.advance()
             elements = []

@@ -1,17 +1,7 @@
-class X {
-    a: string ,
-    b: int,
-}
-
-let u = new X {
-    a: "hello",
-    b: 12
-};
-
-func test() {
-    this.a = "a";
-    this.b = 1;
-}
-
-u.test();
-print(u.a);
+let a = [1,2,3,4];
+let w = a[1];
+let k = w++;
+a[1]++;
+print(w);
+print(k);
+print(a[1]);

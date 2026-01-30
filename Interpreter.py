@@ -488,13 +488,31 @@ class Interpreter:
         self.leave_context()
 
     def visit_inc_node(self, node: IncNode):
+        tp = node.kind
         if type(node.id).__name__ == 'ElementGetNode':
-            self.visit_member_access(node.id.name).__set_elemeny__(
-                    self.visit(node.id.pos), 
+            if tp == SEL_PRE:
+                tmp = self.visit_member_access(node.id.name).__get_element__(self.visit(node.id.pos)).added_by(Number(1.0))
+                self.visit_member_access(node.id.name).__set_elemeny__(
+                        self.visit(node.id.pos),
+                        tmp
+                    )
+                return tmp
+            else:
+                tmp = self.visit_member_access(node.id.name).__get_element__(self.visit(node.id.pos)).copy()
+                self.visit_member_access(node.id.name).__set_elemeny__(
+                    self.visit(node.id.pos),
                     self.visit_member_access(node.id.name).__get_element__(self.visit(node.id.pos)).added_by(Number(1.0))
                 )
+                return tmp
         else:
-            self.context.set(node.id, self.visit(node.id).added_by(Number(1.0)))
+            if tp == SEL_PRE:
+                tmp = self.visit(node.id).added_by(Number(1.0))
+                self.context.set(node.id, tmp)
+                return tmp
+            else:
+                tmp = self.visit(node.id).copy()
+                self.context.set(node.id, self.visit(node.id).added_by(Number(1.0)))
+                return tmp
 
     def visit_assign_node(self, node: AssignNode):
         if type(node.id).__name__ == 'MemberAccessNode':
@@ -505,13 +523,31 @@ class Interpreter:
             self.context.set(node.id, self.visit(node.value).copy())
 
     def visit_dec_node(self, node: DecNode):
+        tp = node.kind
         if type(node.id).__name__ == 'ElementGetNode':
-            self.visit_member_access(node.id.name).__set_elemeny__(
-                    self.visit(node.id.pos), 
-                    self.visit_member_access(node.id.name).__get_element__(self.visit(node.id.pos)).subbed_by(Number(1.0).copy())
+            if tp == SEL_PRE:
+                tmp = self.visit_member_access(node.id.name).__get_element__(self.visit(node.id.pos)).subbed_by(Number(1.0))
+                self.visit_member_access(node.id.name).__set_elemeny__(
+                        self.visit(node.id.pos),
+                        tmp
+                    )
+                return tmp
+            else:
+                tmp = self.visit_member_access(node.id.name).__get_element__(self.visit(node.id.pos)).copy()
+                self.visit_member_access(node.id.name).__set_elemeny__(
+                    self.visit(node.id.pos),
+                    self.visit_member_access(node.id.name).__get_element__(self.visit(node.id.pos)).subbed_by(Number(1.0))
                 )
+                return tmp
         else:
-            self.context.set(node.id, self.visit(node.id).subbed_by(Number(1.0)).copy())
+            if tp == SEL_PRE:
+                tmp = self.visit(node.id).subbed_by(Number(1.0))
+                self.context.set(node.id, tmp)
+                return tmp
+            else:
+                tmp = self.visit(node.id).copy()
+                self.context.set(node.id, self.visit(node.id).subbed_by(Number(1.0)))
+                return tmp
 
     def visit_while_node(self, node: WhileNode):
         self.create_new_context('<WhileLoop>')
