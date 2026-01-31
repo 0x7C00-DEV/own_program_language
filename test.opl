@@ -1,7 +1,1 @@
-let a = [1,2,3,4];
-let w = a[1];
-let k = w++;
-a[1]++;
-print(w);
-print(k);
-print(a[1]);
+print("hello\n\n");

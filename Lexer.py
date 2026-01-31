@@ -74,8 +74,20 @@ class Lexer:
         ss = ''
         begin = self.make_pos()
         while self.current is not None and self.current != eof:
-            ss += self.current
-            self.advance()
+            if self.current != '\\':
+                ss += self.current
+                self.advance()
+            else:
+                self.advance()
+                nt = self.current
+                self.advance()
+                if nt == 'n': ss += '\n'
+                elif nt == 'r': ss += '\r'
+                elif nt == 't': ss += '\t'
+                elif nt == 'a': ss += '\a'
+                elif nt == 'b': ss += '\b'
+                elif nt == 'f': ss += '\f'
+                else: ss += nt 
         end = self.make_pos()
         if self.current != eof:
             print(f'SyntaxError: want a "{eof}", but got "{self.current}", at {end}')

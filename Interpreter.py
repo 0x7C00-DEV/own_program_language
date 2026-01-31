@@ -260,6 +260,14 @@ class Interpreter:
         self.context.add('print', self.i_print)
         self.context.add('input', self.i_input)
         self.context.add('new_array', self.i_new_arr)
+        self.context.add('number', self.i_string_to_float)
+        self.context.add('string', self.i_float_to_string)
+
+    def i_float_to_string(self, args: list[Number]):
+        return String(str(args[0].number))
+
+    def i_string_to_float(self, args: list[String]):
+        return Number(float(args[0].string))
 
     def i_new_arr(self, length: list[any]):
         a = []
@@ -278,11 +286,11 @@ class Interpreter:
         for i in name:
             tp = type(i).__name__
             if tp == 'Number':
-                print(i.number)
+                print(i.number, end='')
             elif tp == 'String':
-                print(i.string)
+                print(i.string, end='')
             else:
-                print(name)
+                print(name, end='')
 
     def visit_function_node(self, node: FunctionDefineNode):
         args = node.params
