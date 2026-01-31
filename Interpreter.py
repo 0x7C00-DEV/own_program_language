@@ -262,6 +262,15 @@ class Interpreter:
         self.context.add('new_array', self.i_new_arr)
         self.context.add('number', self.i_string_to_float)
         self.context.add('string', self.i_float_to_string)
+        self.context.add('append', self.i_append)
+        self.context.add('println', self.i_println)
+        self.context.add('size', self.i_size)
+
+    def i_size(self, args: list[any]):
+        return self.context.table['this'].__length__()
+
+    def i_append(self, args: list[any]):
+        self.context.table['this'].added_by(args[0]) 
 
     def i_float_to_string(self, args: list[Number]):
         return String(str(args[0].number))
@@ -281,6 +290,10 @@ class Interpreter:
 
     def i_len(self, name):
         return name[0].__length__()
+    
+    def i_println(self, name: list[any]):
+        self.i_print(name)
+        print()
 
     def i_print(self, name: list[any]):
         for i in name:
@@ -390,27 +403,38 @@ class Interpreter:
         if type(node.name).__name__ == 'MemberAccessNode':
             name = node.name.fiele
             parent = node.name.parent
-            id = self.visit_member_access(name)
-            this = self.visit_member_access(parent)
-            param: list[VarDefineNode] = id.param
-            body: BlockNode  = id.body
-            context_ = {}
-            context_['this'] = this 
-            for i in range(len(node.param)):
-                context_[param[i].name] = self.visit(node.param[i])
-            return Interpreter(body.codes, Context(context_, self.context, id.name)).res  
-        id: Function = self.visit_member_access(node.name)
-        if type(id).__name__ == 'function' or type(id).__name__ == 'method':
+            func_id = self.visit_member_access(name)
+            if type(func_id).__name__ != 'function' and type(func_id).__name__ != 'method' and func_id is not None:
+                this = self.visit_member_access(parent)
+                param: list[VarDefineNode] = func_id.param
+                body: BlockNode  = func_id.body
+                context_ = {}
+                context_['this'] = this 
+                for i in range(len(node.param)):
+                    context_[param[i].name] = self.visit(node.param[i])
+                return Interpreter(body.codes, Context(context_, self.context, func_id.name)).res  
+            else:
+                this = self.visit_member_access(parent)
+                vals = []
+                for i in node.param:
+                    vals.append(self.visit(i))
+                self.create_new_context()
+                self.context.table['this'] = this
+                tmp = func_id(vals)
+                self.leave_context()
+                return tmp 
+        func_id: Function = self.visit_member_access(node.name)
+        if type(func_id).__name__ == 'function' or type(func_id).__name__ == 'method':
             vals = []
             for i in node.param:
                 vals.append(self.visit(i))
-            return id(vals)
-        param: list[VarDefineNode] = id.param
-        body: BlockNode  = id.body
+            return func_id(vals)
+        param: list[VarDefineNode] = func_id.param
+        body: BlockNode  = func_id.body
         context_ = {}
         for i in range(len(node.param)):
             context_[param[i].name] = self.visit(node.param[i])
-        return Interpreter(body.codes, Context(context_, self.context, id.name)).res
+        return Interpreter(body.codes, Context(context_, self.context, func_id.name)).res
 
     def visit_member_access(self, node):
         if type(node).__name__ == 'ElementGetNode':

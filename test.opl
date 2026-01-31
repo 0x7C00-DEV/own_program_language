@@ -1,1 +1,11 @@
-print("hello\n\n");
+let x = [];
+for (let i = 0; i < 100; ++i) {
+    x.append(i);
+}
+
+println(x.size());
+
+for (let i = 0; i < x.size(); ++i) {
+    println(x[i]);
+}
+
