@@ -1,9 +1,20 @@
+func max(let a) {
+    let maxx = a[0];
+    for (let i = 1; i < a.size(); ++i) {
+        if (a[i] > maxx) {
+            maxx = a[i];
+        }
+    }
+    return maxx;
+}
+
 let x = [];
 for (let i = 0; i < 100; ++i) {
     x.append(i);
 }
 
 println(x.size());
+println(max(x));
 
 for (let i = 0; i < x.size(); ++i) {
     println(x[i]);

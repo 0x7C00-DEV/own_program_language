@@ -113,6 +113,9 @@ class Lexer:
         while self.current is not None:
             if '0' <= self.current <= '9':
                 self.tokens.append(self.make_digit())
+            elif self.current == '#':
+                while self.current is not None and self.current != '\n':
+                    self.advance()
             elif 'a' <= self.current <= 'z' or 'A' <= self.current <= 'Z':
                 self.tokens.append(self.make_id())
             elif self.current == '\'' or self.current == '"':
